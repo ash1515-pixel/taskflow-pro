@@ -14,9 +14,27 @@
       <h1>TaskFlow Pro</h1>
       <div class="actions">
         <input id="search" type="text" placeholder="Search tasks" />
+        <select id="priorityFilter">
+          <option value="all">All Priorities</option>
+          <option value="high">High</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
+        </select>
         <button id="newTaskBtn">New Task</button>
       </div>
     </header>
+
+    <section class="toolbar">
+      <div class="left-tools">
+        <button id="exportBtn" class="ghost">Export JSON</button>
+        <label class="import-label">
+          Import JSON
+          <input id="importInput" type="file" accept="application/json" hidden />
+        </label>
+        <button id="clearDoneBtn" class="danger">Clear Done</button>
+      </div>
+      <p id="statusText"></p>
+    </section>
 
     <section class="stats" id="stats"></section>
 
@@ -35,9 +53,15 @@
       </section>
     </main>
 
+    <section class="activity card">
+      <h2>Recent Activity</h2>
+      <ul id="activityList"></ul>
+    </section>
+
     <dialog id="taskModal">
       <form id="taskForm" method="dialog">
-        <h3>Add Task</h3>
+        <h3 id="modalTitle">Add Task</h3>
+        <input type="hidden" name="id" />
         <label>Title<input required name="title" maxlength="80" /></label>
         <label>Description<textarea name="description" rows="3" maxlength="240"></textarea></label>
         <label>Priority
@@ -49,7 +73,7 @@
         </label>
         <label>Due Date<input type="date" name="dueDate" /></label>
         <menu>
-          <button type="button" id="cancelBtn">Cancel</button>
+          <button type="button" id="cancelBtn" class="ghost">Cancel</button>
           <button value="default">Save</button>
         </menu>
       </form>
