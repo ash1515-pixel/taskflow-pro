@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TaskFlow Pro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <h1>TaskFlow Pro</h1>
+      <div class="actions">
+        <input id="search" type="text" placeholder="Search tasks" />
+        <button id="newTaskBtn">New Task</button>
+      </div>
+    </header>
+
+    <section class="stats" id="stats"></section>
+
+    <main class="board" id="board">
+      <section class="column" data-status="todo">
+        <h2>To Do</h2>
+        <div class="list" id="todoList"></div>
+      </section>
+      <section class="column" data-status="inprogress">
+        <h2>In Progress</h2>
+        <div class="list" id="inprogressList"></div>
+      </section>
+      <section class="column" data-status="done">
+        <h2>Done</h2>
+        <div class="list" id="doneList"></div>
+      </section>
+    </main>
+
+    <dialog id="taskModal">
+      <form id="taskForm" method="dialog">
+        <h3>Add Task</h3>
+        <label>Title<input required name="title" maxlength="80" /></label>
+        <label>Description<textarea name="description" rows="3" maxlength="240"></textarea></label>
+        <label>Priority
+          <select name="priority">
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High</option>
+          </select>
+        </label>
+        <label>Due Date<input type="date" name="dueDate" /></label>
+        <menu>
+          <button type="button" id="cancelBtn">Cancel</button>
+          <button value="default">Save</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <script src="script.js"></script>
+  </body>
+</html>

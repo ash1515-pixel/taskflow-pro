@@ -1,0 +1,99 @@
+:root {
+  --bg: #f4f7ff;
+  --surface: #ffffff;
+  --text: #1c2541;
+  --muted: #5f6b86;
+  --border: #d9e2f4;
+  --accent: #3457ff;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: "Space Grotesk", sans-serif;
+  color: var(--text);
+  background: linear-gradient(135deg, #f6f8ff, #eef3ff);
+}
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 4vw;
+  border-bottom: 1px solid var(--border);
+  background: #ffffffcc;
+  backdrop-filter: blur(8px);
+  position: sticky;
+  top: 0;
+}
+.actions { display: flex; gap: 0.6rem; }
+input, textarea, select, button {
+  font: inherit;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.55rem 0.7rem;
+}
+button {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+}
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.8rem;
+  padding: 1rem 4vw;
+}
+.stat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 0.8rem;
+}
+.stat strong { font-size: 1.4rem; }
+.board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.9rem;
+  padding: 0.2rem 4vw 1.5rem;
+}
+.column {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #ffffff;
+  min-height: 420px;
+  padding: 0.8rem;
+}
+.column h2 { margin: 0.2rem 0 0.8rem; font-size: 1rem; }
+.list { min-height: 340px; }
+.task {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fbfdff;
+  padding: 0.7rem;
+  margin-bottom: 0.6rem;
+  cursor: grab;
+  animation: rise 0.22s ease;
+}
+.task p { margin: 0.4rem 0; color: var(--muted); font-size: 0.9rem; }
+.meta { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--muted); }
+.badge { border-radius: 999px; padding: 0.15rem 0.45rem; color: #fff; font-weight: 700; }
+.low { background: #13b981; }
+.medium { background: #f59e0b; }
+.high { background: #ef4444; }
+.column.over { outline: 2px dashed #6b8dff; }
+dialog {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  width: min(500px, 92vw);
+}
+form { display: grid; gap: 0.65rem; }
+label { display: grid; gap: 0.3rem; font-size: 0.9rem; }
+menu { display: flex; justify-content: flex-end; gap: 0.5rem; padding: 0; margin: 0.5rem 0 0; }
+#cancelBtn { background: #e8edf9; color: #223; }
+@keyframes rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (max-width: 960px) {
+  .stats, .board { grid-template-columns: 1fr; }
+}
