@@ -1,5 +1,5 @@
-const TASK_KEY = 'taskflow-pro-tasks-v2';
-const ACTIVITY_KEY = 'taskflow-pro-activity-v1';
+const TASK_KEY = 'taskflow-pro-tasks-v3';
+const ACTIVITY_KEY = 'taskflow-pro-activity-v2';
 
 const seed = [
   { id: crypto.randomUUID(), title: 'Prepare client demo', description: 'Draft screen flow for dashboard module', priority: 'high', dueDate: '', status: 'todo', createdAt: Date.now() },
@@ -17,6 +17,7 @@ const refs = {
   stats: document.getElementById('stats'),
   statusText: document.getElementById('statusText'),
   activityList: document.getElementById('activityList'),
+  aiInsights: document.getElementById('aiInsights'),
   modal: document.getElementById('taskModal'),
   modalTitle: document.getElementById('modalTitle'),
   form: document.getElementById('taskForm'),
@@ -24,7 +25,11 @@ const refs = {
   newTaskBtn: document.getElementById('newTaskBtn'),
   exportBtn: document.getElementById('exportBtn'),
   importInput: document.getElementById('importInput'),
+  autoPrioritizeBtn: document.getElementById('autoPrioritizeBtn'),
+  aiPlanBtn: document.getElementById('aiPlanBtn'),
+  aiBreakdownBtn: document.getElementById('aiBreakdownBtn'),
   clearDoneBtn: document.getElementById('clearDoneBtn'),
+  board: document.getElementById('board'),
   lists: {
     todo: document.getElementById('todoList'),
     inprogress: document.getElementById('inprogressList'),
@@ -47,10 +52,7 @@ function filteredTasks() {
   const priority = refs.priorityFilter.value;
 
   return tasks.filter((t) => {
-    const queryMatch = [t.title, t.description, t.priority, t.status]
-      .join(' ')
-      .toLowerCase()
-      .includes(query);
+    const queryMatch = [t.title, t.description, t.priority, t.status].join(' ').toLowerCase().includes(query);
     const priorityMatch = priority === 'all' ? true : t.priority === priority;
     return queryMatch && priorityMatch;
   });
@@ -73,7 +75,6 @@ function renderStats(list) {
 }
 
 function taskTemplate(task) {
-  const due = task.dueDate || 'No due date';
   return `
     <article class="task" draggable="true" data-id="${task.id}">
       <div class="task-head">
@@ -86,7 +87,7 @@ function taskTemplate(task) {
       <p>${task.description || 'No description'}</p>
       <div class="meta">
         <span class="badge ${task.priority}">${task.priority}</span>
-        <span>${due}</span>
+        <span>${task.dueDate || 'No due date'}</span>
       </div>
     </article>
   `;
@@ -127,8 +128,8 @@ function openModal(task) {
   refs.modal.showModal();
 }
 
-function handleBoardClick(e) {
-  const btn = e.target.closest('button[data-action]');
+function handleBoardClick(event) {
+  const btn = event.target.closest('button[data-action]');
   if (!btn) return;
 
   const id = btn.dataset.id;
@@ -148,21 +149,24 @@ function handleBoardClick(e) {
 }
 
 function setupDrag() {
-  document.addEventListener('dragstart', (e) => {
-    const task = e.target.closest('.task');
-    if (!task) return;
-    dragTaskId = task.dataset.id;
+  document.addEventListener('dragstart', (event) => {
+    const taskNode = event.target.closest('.task');
+    if (!taskNode) return;
+    dragTaskId = taskNode.dataset.id;
   });
 
   document.querySelectorAll('.column').forEach((col) => {
     const status = col.dataset.status;
-    col.addEventListener('dragover', (e) => {
-      e.preventDefault();
+
+    col.addEventListener('dragover', (event) => {
+      event.preventDefault();
       col.classList.add('over');
     });
+
     col.addEventListener('dragleave', () => col.classList.remove('over'));
-    col.addEventListener('drop', (e) => {
-      e.preventDefault();
+
+    col.addEventListener('drop', (event) => {
+      event.preventDefault();
       col.classList.remove('over');
       if (!dragTaskId) return;
 
@@ -176,14 +180,76 @@ function setupDrag() {
   });
 }
 
+function autoPrioritize() {
+  const now = new Date();
+  tasks = tasks.map((t) => {
+    const text = `${t.title} ${t.description}`.toLowerCase();
+    const dueSoon = t.dueDate && (new Date(t.dueDate).getTime() - now.getTime()) / (1000 * 60 * 60 * 24) <= 3;
+
+    if (dueSoon || text.includes('urgent') || text.includes('bug') || text.includes('client')) {
+      return { ...t, priority: 'high' };
+    }
+    if (text.includes('review') || text.includes('api') || text.includes('testing')) {
+      return { ...t, priority: 'medium' };
+    }
+    return { ...t, priority: 'low' };
+  });
+  logActivity('AI auto-prioritized tasks based on due date and keywords');
+  persist();
+  render();
+}
+
+function createAIPlan() {
+  const todo = tasks.filter((t) => t.status === 'todo');
+  const inprogress = tasks.filter((t) => t.status === 'inprogress');
+  const high = tasks.filter((t) => t.priority === 'high');
+  const overdue = tasks.filter((t) => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== 'done');
+
+  const suggestions = [];
+  suggestions.push(`Focus slot 1: Resolve ${Math.min(2, high.length)} high-priority task(s) first.`);
+  suggestions.push(`Focus slot 2: Move ${Math.min(2, todo.length)} task(s) from To Do to In Progress.`);
+  suggestions.push(`WIP balance: Keep in-progress tasks under ${Math.max(2, Math.ceil(inprogress.length / 2) + 1)} items.`);
+  if (overdue.length) suggestions.push(`Urgent: ${overdue.length} task(s) are overdue. Reassign or close today.`);
+  suggestions.push('Daily routine: 15 minutes planning, 90 minutes deep work, 15 minutes review.');
+
+  refs.aiInsights.innerHTML = suggestions.map((s) => `<li>${s}</li>`).join('');
+  logActivity('Generated AI sprint plan');
+  persist();
+  renderActivity();
+}
+
+function breakdownHighPriority() {
+  const target = tasks.find((t) => t.priority === 'high' && t.status !== 'done');
+  if (!target) {
+    refs.aiInsights.innerHTML = '<li>No active high-priority task found for breakdown.</li>';
+    return;
+  }
+
+  const points = [
+    `Clarify acceptance criteria for \"${target.title}\"`,
+    'Create implementation checklist with 3 deliverables',
+    'Build and test the first deliverable',
+    'Run QA pass and edge-case checks',
+    'Share update and move task based on completion status'
+  ];
+
+  refs.aiInsights.innerHTML = points.map((p) => `<li>${p}</li>`).join('');
+  logActivity(`Generated AI task breakdown for \"${target.title}\"`);
+  persist();
+  renderActivity();
+}
+
 refs.newTaskBtn.addEventListener('click', () => openModal());
 refs.cancelBtn.addEventListener('click', () => refs.modal.close());
 refs.search.addEventListener('input', render);
 refs.priorityFilter.addEventListener('change', render);
-document.getElementById('board').addEventListener('click', handleBoardClick);
+refs.autoPrioritizeBtn.addEventListener('click', autoPrioritize);
+refs.aiPlanBtn.addEventListener('click', createAIPlan);
+refs.aiBreakdownBtn.addEventListener('click', breakdownHighPriority);
+refs.board.addEventListener('click', handleBoardClick);
 
-refs.form.addEventListener('submit', (e) => {
-  e.preventDefault();
+refs.form.addEventListener('submit', (event) => {
+  event.preventDefault();
   const data = new FormData(refs.form);
   const id = String(data.get('id') || '');
   const payload = {
@@ -227,8 +293,8 @@ refs.exportBtn.addEventListener('click', () => {
   render();
 });
 
-refs.importInput.addEventListener('change', async (e) => {
-  const file = e.target.files && e.target.files[0];
+refs.importInput.addEventListener('change', async (event) => {
+  const file = event.target.files && event.target.files[0];
   if (!file) return;
 
   try {
@@ -246,5 +312,6 @@ refs.importInput.addEventListener('change', async (e) => {
 });
 
 setupDrag();
+createAIPlan();
 render();
 persist();
